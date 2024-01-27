@@ -113,3 +113,78 @@ struct MYC : public CBOR
 		return TRUE;
 	}
 };
+
+//////////////////////////////////////////////////////////////////////////
+
+void cbt()
+{
+	ULONG s = 0;
+	LONG cb = 0;
+	PBYTE buf = 0;
+
+	UCHAR transactionId[] = {0x11,0x22,0x33};
+	UCHAR ticket[] = {0x44,0x55,0x66};
+	UCHAR cancellationId[] = {0x77,0x88,0x99};
+
+	while (!encode_bin(encode_string(
+		encode_int(encode_string(
+		encode_enum(encode_string(
+		encode_int(encode_string(
+		encode_int(encode_string(
+		encode_int(encode_string(
+		encode_map(encode_string(
+		encode_string(encode_string(
+		encode_bin(encode_string(
+		encode_bin(encode_string(
+		encode_int(encode_string(
+		encode_int(encode_string(
+		encode_int(encode_string(
+		encode_map(buf, &cb, 7), 
+		&cb, "command"), &cb, -3), 
+		&cb, "flags"), &cb, 0x400000),
+		&cb, "timeout"), &cb, 0x240c8400),
+		&cb, "transactionId"), &cb, sizeof(transactionId), transactionId),
+		&cb, "ticket"), &cb, sizeof(ticket), ticket),
+		&cb, "request"), &cb, "some string"),
+		&cb, "webAuthNPara"),
+		&cb, 6),
+		&cb, "wnd"), &cb, 0x6088a),
+		&cb, "userVerification"), &cb, 1),
+		&cb, "attestationPreference"), &cb, 0),
+		&cb, "requireResident"), &cb, CBOR::t_true),
+		&cb, "attachment"), &cb, 0),
+		&cb, "cancellationId"), &cb, sizeof(cancellationId), cancellationId) && !s)
+	{
+		buf = (PBYTE)alloca(s = cb = -cb);
+		memset(buf, '*', s);
+	}
+
+	MYC cbr;
+	if (cbr.decode(buf, s, &s))
+	{
+		__nop();
+	}
+}
+
+/************************************************************************/
+/* 
+
+{ // [7]
+	"command" : -3
+	"flags" : 400000
+	"timeout" : 240c8400
+	"transactionId" : 112233
+	"ticket" : 445566
+	"request" : "some string"
+	"webAuthNPara" : { // [6]
+		"wnd" : 6088a
+		"userVerification" : 1
+		"attestationPreference" : 0
+		"requireResident" : true
+		"attachment" : 0
+		"cancellationId" : 778899
+	}
+}
+
+*/
+/************************************************************************/

@@ -230,3 +230,105 @@ PBYTE CBOR::decode(_In_reads_bytes_(cb) PBYTE pb, _In_ ULONG cb, _Out_ ULONG *pc
 
 	return 0;
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+PBYTE encode_int(_Out_writes_(cb) PBYTE pb, _Inout_ LONG* pcb, ULONG64 value, UCHAR type)
+{
+	LONG rcb, cb = *pcb;
+	UCHAR len;
+
+	if (value < 24)
+	{
+		rcb = 1, len = (UCHAR)value;
+	}
+	else if (value < 0x100)
+	{
+		rcb = 2, len = 24;
+	}
+	else if (value < 0x10000)
+	{
+		rcb = 3, len = 25;
+	}
+	else if (value < 0x100000000)
+	{
+		rcb = 5, len = 26;
+	}
+	else
+	{
+		rcb = 9, len = 27;
+	}
+
+	*pcb -= rcb;
+
+	if (cb < rcb)
+	{
+		return 0;
+	}
+
+	*pb++ = (type << 5) | len;
+
+	if (--rcb)
+	{
+		PBYTE qb = (PBYTE)&value + rcb;
+		do 
+		{
+			*pb++ = *--qb;
+		} while (--rcb);
+	}
+
+	return pb;
+}
+
+PBYTE encode_bin(_Out_writes_(cb) PBYTE pb, _Inout_ LONG *pcb, LONG len, UCHAR type, const void* pv)
+{
+	pb = encode_int(pb, pcb, len, type);
+
+	LONG cb = *pcb;
+
+	*pcb -= len;
+
+	if (cb < len)
+	{
+		return 0;
+	}
+
+	if (len)
+	{
+		memcpy(pb, pv, len);
+		pb += len;
+	}
+
+	return pb;
+}
+
+PBYTE encode_enum(_Out_writes_(cb) PBYTE pb, _Inout_ LONG *pcb, CBOR::T7 t)
+{
+	LONG cb = *pcb;
+
+	*pcb -= 1;
+
+	if (cb < 1)
+	{
+		return 0;
+	}
+
+	switch (t)
+	{
+	case CBOR::t_false:
+		*pb = 0xF4;
+		break;
+	case CBOR::t_true:
+		*pb = 0xF5;
+		break;
+	case CBOR::t_null:
+		*pb = 0xF6;
+		break;
+	case CBOR::t_undefined:
+		*pb = 0xF7;
+		break;
+	default: return 0;
+	}
+
+	return pb + 1;
+}

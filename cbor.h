@@ -4,7 +4,7 @@ struct CBOR
 {
 	enum T7 { t_false, t_true, t_null, t_undefined };
 
-	enum T : UCHAR {
+	enum {
 		t_uint, t_int, t_bin, t_string, t_array, t_map, t_enum
 	};
 
@@ -66,3 +66,34 @@ struct CBOR
 		return TRUE;
 	}
 };
+
+PBYTE encode_int( _Out_writes_(cb) PBYTE pb, _Inout_ LONG* pcb, ULONG64 value, UCHAR type);
+
+PBYTE encode_enum(_Out_writes_(cb) PBYTE pb, _Inout_ LONG *pcb, CBOR::T7 t);
+
+PBYTE encode_bin( _Out_writes_(cb) PBYTE pb, _Inout_ LONG *pcb, LONG len, UCHAR type, const void* pv);
+
+inline PBYTE encode_string( _Out_writes_(cb) PBYTE pb, _Inout_ LONG *pcb, _In_ PCSTR pcsz)
+{
+	return encode_bin(pb, pcb, (ULONG)strlen(pcsz), CBOR::t_string, pcsz);
+}
+
+inline PBYTE encode_bin( _Out_writes_(cb) PBYTE pb, _Inout_ LONG *pcb, _In_ LONG len, const void* pv)
+{
+	return encode_bin(pb, pcb, len, CBOR::t_bin, pv);
+}
+
+inline PBYTE encode_map( _Out_writes_(cb) PBYTE pb, _Inout_ LONG* pcb, ULONG nItems)
+{
+	return encode_int(pb, pcb, nItems, CBOR::t_map);
+}
+
+inline PBYTE encode_array( _Out_writes_(cb) PBYTE pb, _Inout_ LONG* pcb, ULONG nItems)
+{
+	return encode_int(pb, pcb, nItems, CBOR::t_array);
+}
+
+inline PBYTE encode_int( _Out_writes_(cb) PBYTE pb, _Inout_ LONG* pcb, LONG64 value)
+{
+	return 0 > value ? encode_int(pb, pcb, -1 - value, CBOR::t_int) : encode_int(pb, pcb, value, CBOR::t_uint);
+}
