@@ -156,7 +156,6 @@ void cbt()
 		&cb, "cancellationId"), &cb, sizeof(cancellationId), cancellationId) && !s)
 	{
 		buf = (PBYTE)alloca(s = cb = -cb);
-		memset(buf, '*', s);
 	}
 
 	MYC cbr;
